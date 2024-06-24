@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install APK on Devices</title>
+    <style>
+        /* Optional: Add some basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        form {
+            max-width: 800px;
+            margin: auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 100%;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Install APK on Devices</h1>
+
+    <!-- Form for selecting number of devices, IP addresses, and APKs -->
+    <form id="installForm" action="/install" method="post">
+        <!-- Number of Devices -->
+        <label for="device_count">Number of Devices:</label>
+        <input type="number" id="device_count" name="device_count" min="1" required>
+        <br>
+
+        <!-- Device IP Addresses -->
+        <div id="deviceIpInputs">
+            <!-- IP address inputs will be populated dynamically based on device_count -->
+        </div>
+        <br>
+
+        <!-- APK Selection for Teams -->
+        <h2>Select APKs for Teams:</h2>
+        <div id="teamsApkSelection"></div>
+        <br>
+
+        <!-- APK Selection for Admin -->
+        <h2>Select APKs for Admin:</h2>
+        <div id="adminApkSelection"></div>
+        <br>
+
+        <!-- APK Selection for CP -->
+        <h2>Select APKs for CP:</h2>
+        <div id="cpApkSelection"></div>
+        <br>
+
+        <!-- Button to submit the form -->
+        <button type="submit">Install Selected APKs</button>
+    </form>
+
+    <script>
+        // Function to fetch APKs for a folder and populate checkboxes
+        function populateApks(folder, containerId) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/get_apks?folder=' + folder, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var apk_files = JSON.parse(xhr.responseText);
+                    var html = '';
+                    apk_files.forEach(function(apk) {
+                        html += `
+                        <input type="checkbox" id="${folder}_${apk}" name="apk_file_${folder}" value="${apk}">
+                        <label for="${folder}_${apk}">${apk}</label><br>`;
+                    });
+                    document.getElementById(containerId).innerHTML = html;
+                }
+            };
+            xhr.send();
+        }
+
+        // Populate APK selection for each folder on page load
+        populateApks('teams', 'teamsApkSelection');
+        populateApks('admin', 'adminApkSelection');
+        populateApks('cp', 'cpApkSelection');
+
+        // Update IP address inputs based on selected device_count
+        document.getElementById('device_count').addEventListener('change', function() {
+            var count = parseInt(this.value);
+            var html = '';
+            for (var i = 1; i <= count; i++) {
+                html += `
+                <label for="device_ip_${i}">Device ${i} IP:</label>
+                <input type="text" id="device_ip_${i}" name="device_ip_${i}" required>
+                <br>`;
+            }
+            document.getElementById('deviceIpInputs').innerHTML = html;
+        });
+    </script>
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+</body>
+</html>
